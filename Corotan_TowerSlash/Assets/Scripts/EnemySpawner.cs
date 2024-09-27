@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
+    GameManager _gM;
+
     [SerializeField]
     GameObject _enemy;
     private void Start()
     {
+        _gM = GameManager.Instance;
         StartCoroutine(SpawnEnemies());
     }
 
@@ -15,8 +18,9 @@ public class EnemySpawner : MonoBehaviour
     {
         while (true)
         {
-            SpawnEnemy();
-            yield return new WaitForSeconds(6f);
+            if (_gM._gState) SpawnEnemy();
+            
+            yield return new WaitForSeconds(Random.Range(3.33f, 6.66f));
         }
     }
 
