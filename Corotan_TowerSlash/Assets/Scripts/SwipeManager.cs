@@ -12,17 +12,12 @@ public enum Direction
     Tap,
     None
 }
-public class SwipeManager : MonoBehaviour
+public class SwipeManager : Singleton<SwipeManager>
 {
-    public static SwipeManager Instance;
     private Vector2 _fp, _lp;
     private float _dragThreshold, _tapThreshold;
     public Direction _direction;
 
-    void Awake()
-    {
-        Instance = this;
-    }
     void Start()
     {
         _dragThreshold = Screen.height * 15 / 100;

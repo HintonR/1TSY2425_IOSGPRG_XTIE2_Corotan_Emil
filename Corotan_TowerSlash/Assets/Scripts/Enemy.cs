@@ -21,10 +21,8 @@ public class Enemy : MonoBehaviour
     bool _isSpinning = false;
     private float _walkSpeed = 1.5f;
 
-    public GameObject getArrow()
-    {
-        return _arrowInstance;
-    }
+    public GameObject getArrow() { return _arrowInstance; }
+    
     void Start()
     {
         _gM = GameManager.Instance;
@@ -40,7 +38,7 @@ public class Enemy : MonoBehaviour
         //Debug.Log(_direction);
         SpawnArrowAbove();
         StartCoroutine(SpinArrow());
-        _gM.AddEnemy(gameObject);
+        _gM._enemySpawner.GetComponent<EnemySpawner>().AddEnemy(gameObject);
     }
 
     void Update()
@@ -60,10 +58,8 @@ public class Enemy : MonoBehaviour
         {
             Destroy(_arrowInstance);
             Destroy(gameObject);
-            _gM.RemoveEnemy(gameObject);
+            _gM._enemySpawner.GetComponent<EnemySpawner>().RemoveEnemy(gameObject);
         }
-
-
     }
 
     private IEnumerator SpinArrow()
@@ -77,23 +73,11 @@ public class Enemy : MonoBehaviour
             _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, newZRotation);
 
             currentZRotation = Mathf.Round(currentZRotation) % 360;
-            if (Mathf.Abs(currentZRotation - 90f) < 0.1f)
-            {
-                _direction = Direction.Right;
-            }
-            else if (Mathf.Abs(currentZRotation - 180f) < 0.1f)
-            {
-                _direction = Direction.Up;
-            }
-            else if (Mathf.Abs(currentZRotation - 270f) < 0.1f)
-            {
-                _direction = Direction.Left;
-            }
-            else if (Mathf.Abs(currentZRotation - 0f) < 0.1f || Mathf.Abs(currentZRotation - 360f) < 0.1f)
-            {
-                _direction = Direction.Down;
-            }
-
+            if (Mathf.Abs(currentZRotation - 90f) < 0.1f)       _direction = Direction.Right;
+            else if (Mathf.Abs(currentZRotation - 180f) < 0.1f) _direction = Direction.Up;
+            else if (Mathf.Abs(currentZRotation - 270f) < 0.1f) _direction = Direction.Left;
+            else if (Mathf.Abs(currentZRotation - 0f) < 0.1f || 
+                     Mathf.Abs(currentZRotation - 360f) < 0.1f) _direction = Direction.Down;
             }
             yield return new WaitForSeconds(0.3f);
         }
@@ -116,9 +100,7 @@ public class Enemy : MonoBehaviour
         }
         else if (other.CompareTag("Player"))
         {
-            Destroy(_arrowInstance);
-            Destroy(gameObject);
-            _gM._player.GetComponent<Player>().GetHurt();
+            Attack();
         }
     }
 
@@ -128,16 +110,9 @@ public class Enemy : MonoBehaviour
         {
             if (_color == ArrowColor.Green || _color == ArrowColor.Yellow) 
             {            
-                if (_sW._direction == _direction) 
-                {
-                    Killed();
-                }
-                else if (_sW._direction != Direction.None)
-                {
-                    Destroy(_arrowInstance);
-                    Destroy(gameObject);
-                    _gM._player.GetComponent<Player>().GetHurt();
-                }
+                if (_sW._direction == _direction) Killed();
+                else if (_sW._direction != Direction.None) Attack();
+                
             }
             else if (_color == ArrowColor.Red)
             {
@@ -148,12 +123,7 @@ public class Enemy : MonoBehaviour
                 {
                     Killed();
                 }
-                else if (_sW._direction != Direction.None)
-                {
-                    Destroy(_arrowInstance);
-                    Destroy(gameObject);
-                    _gM._player.GetComponent<Player>().GetHurt();
-                }
+                else if (_sW._direction != Direction.None) Attack();
             }
         }
     }
@@ -174,31 +144,20 @@ public class Enemy : MonoBehaviour
             SetArrowRotation();
         }
     }
+
     void SetArrowRotation()
     {
-        if (_direction == Direction.Up)
-        {
-            _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 270);
-        }
-        else if (_direction == Direction.Down)
-        {
-            _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 90);
-        }
-        else if (_direction == Direction.Left)
-        {
-            _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 0);
-        }
-        else if (_direction == Direction.Right)
-        {
-            _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 180);
-        }
+        if (_direction == Direction.Up) _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 270);
+        else if (_direction == Direction.Down) _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 90);
+        else if (_direction == Direction.Left) _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 0);
+        else if (_direction == Direction.Right) _arrowInstance.transform.rotation = Quaternion.Euler(0, 0, 180);
     }
 
     void Killed()
     {
         Destroy(_arrowInstance);
         Destroy(gameObject);
-        _gM.RemoveEnemy(gameObject);
+        _gM._enemySpawner.GetComponent<EnemySpawner>().RemoveEnemy(gameObject);
         _gM._player.GetComponent<Player>().PowerUp();
 
         if (_gM._player.GetComponent<Player>().GetDash() < _gM._player.GetComponent<Player>().GetDashCap()) 
@@ -209,4 +168,11 @@ public class Enemy : MonoBehaviour
         _uiM.GetComponent<UIManager>().UpdateDash();
     }
 
+    void Attack()
+    {
+            Destroy(_arrowInstance);
+            Destroy(gameObject);
+            _gM._enemySpawner.GetComponent<EnemySpawner>().RemoveEnemy(gameObject);
+            _gM._player.GetComponent<Player>().GetHurt();
+    }
 }

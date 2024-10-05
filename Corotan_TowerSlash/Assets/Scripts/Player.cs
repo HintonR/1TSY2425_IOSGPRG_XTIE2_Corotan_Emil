@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public enum Type
 {
@@ -16,23 +17,19 @@ public class Player : MonoBehaviour
     Animator _anims;
     int _life, _lifeCap, _dash, _dashCap;
     Type _type;
-    bool _isHurt;
     bool _isDash;
     bool _isTapped = false;
+    bool _isPointer;
 
     public void SetLife(int value) { _life = value; }
     public int GetLife() { return _life; }
     public void SetLifeCap(int value) { _lifeCap = value; }
     public void SetDash(int value) { _dash = value; }
     public int GetDash() { return _dash; }
-    public void SetDashCap(int value) { _dashCap = value; }
     public int GetDashCap() { return _dashCap; }
     public bool GetDashState() { return _isDash; }
     public void SetDashState(bool value) { _isDash = value;}
-    public void UseDash()
-    {
-
-    }
+    public void SetType (Type value) { _type = value; }
 
     void Start()
     {
@@ -40,24 +37,32 @@ public class Player : MonoBehaviour
         _sW = SwipeManager.Instance;
         _uiM = UIManager.Instance;
         _anims = GetComponent<Animator>();
-        _lifeCap = 3;
-        _life = _lifeCap;
-        _dash = 0;
-        _dashCap = 100;
-        _isHurt = false;
-        _isDash = false;
+        
+        _life = 1;
+
         _uiM.GetComponent<UIManager>().UpdateLife();
+        _isDash = false;
     }
 
     void Update()
     {
-        if (_sW._direction == Direction.Tap && _gM._gState && _gM._enemies.Count == 0 && !_isTapped) 
+        if (Input.touchCount > 0)
         {
-        _anims.SetBool("isTapping", true);
-        StartCoroutine(ResetTapping());
-        _isTapped = true;
+            Touch touch = Input.GetTouch(0);
+        
+            if (touch.phase == TouchPhase.Began) _isPointer = EventSystem.current.IsPointerOverGameObject(touch.fingerId);
         }
 
+        if (_sW._direction == Direction.Tap && _gM._gState && _gM._enemySpawner.GetComponent<EnemySpawner>()._enemies.Count == 0 && !_isTapped)
+        {
+            if (!_isPointer)
+            {
+                _anims.SetBool("isTapping", true);
+                StartCoroutine(ResetTapping());
+                _isTapped = true;
+                transform.Translate(new Vector3(0.1f, 0f, 0f));
+            }
+        }
     }
 
     private IEnumerator ResetTapping()
@@ -69,14 +74,35 @@ public class Player : MonoBehaviour
         _isTapped = false;
     }
 
+    public void UpdateType()
+    {
+        if (_type == Type.Standard)
+        {
+            _lifeCap = 4;
+            _dashCap = 60;
+        }
+        else if (_type == Type.Tank)
+        {
+            _lifeCap = 6;
+            _dashCap = 120;
+        }
+        else if (_type == Type.Speed)
+        {
+            _lifeCap = 2;
+            _dashCap = 30;
+        }
+        _dash = 0;
+        _life = _lifeCap;
+    }
+
     public void GetHurt()
     {
         if (!_isDash)
         {
-        _life--;
-        _uiM.GetComponent<UIManager>().UpdateLife();
-        _anims.SetBool("isHurt", true);
-        StartCoroutine(ResetHurt());
+            _life--;
+            _uiM.GetComponent<UIManager>().UpdateLife();
+            _anims.SetBool("isHurt", true);
+            StartCoroutine(ResetHurt());
         }
         else 
         { 
@@ -100,7 +126,7 @@ public class Player : MonoBehaviour
     {
         int r = Random.Range(0, 100);
         //Debug.Log(r);
-        if (r < 3)
+        if (r < 10)
         {
             if (_life < _lifeCap)
             { 

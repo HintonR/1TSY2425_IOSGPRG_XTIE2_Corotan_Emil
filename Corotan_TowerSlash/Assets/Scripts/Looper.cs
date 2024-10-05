@@ -22,11 +22,8 @@ public class Looper : MonoBehaviour
         else _scrollSpeed = 1.5f;
 
         transform.position += Vector3.down * _scrollSpeed *  Time.deltaTime;
-
         if (transform.position.y <= _startPosition.y - _height)
-        {
             transform.position = new Vector3(transform.position.x, _startPosition.y, transform.position.z);
-        }
     }
 }
 
